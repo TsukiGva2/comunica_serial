@@ -6,8 +6,7 @@ import (
 )
 
 func main() {
-	// Initialize SerialSender with a baud rate of 9600
-	sender, err := NewSerialSender(9600)
+	sender, err := NewSerialSender(115200)
 	if err != nil {
 		log.Fatalf("Failed to initialize SerialSender: %v", err)
 	}

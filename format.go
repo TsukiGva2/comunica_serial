@@ -7,7 +7,7 @@ import (
 )
 
 type PCData struct {
-	Tags       atomic.Int32
+	Tags       atomic.Int64
 	UniqueTags atomic.Int32
 	CommStatus atomic.Bool
 	WifiStatus atomic.Bool
@@ -26,7 +26,7 @@ func boolToInt(b bool) int {
 }
 
 func (pd *PCData) format() string {
-	return fmt.Sprintf("<%d;%d;%d;%d;%d;%d;%d;%d;%d>",
+	return fmt.Sprintf("$MYTMP;%d;%d;%d;%d;%d;%d;%d;%d;%d",
 		pd.Tags.Load(), pd.UniqueTags.Load(), boolToInt(pd.CommStatus.Load()), boolToInt(pd.WifiStatus.Load()),
 		boolToInt(pd.Lte4Status.Load()), boolToInt(pd.RfidStatus.Load()), pd.SysVersion.Load(), pd.Backups.Load(), pd.Envios.Load())
 }

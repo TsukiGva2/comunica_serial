@@ -100,7 +100,7 @@ func (s *SerialSender) Open() (err error) {
 func (s *SerialSender) listenAndSend() {
 
 	for data := range s.dataCh {
-		_, err := s.port.Write([]byte(data))
+		_, err := s.port.Write(append([]byte(data), '\n'))
 
 		if err != nil {
 			log.Printf("Error writing to serial port: %v\n", err)

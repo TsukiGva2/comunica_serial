@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync/atomic"
+	"time"
 )
 
 type PCData struct {
@@ -25,10 +26,47 @@ func boolToInt(b bool) int {
 	return 0
 }
 
+/*
+This is based on the following checksum function
+
+	bool check_sum(SafeString &msg) {
+	  int idxStar = msg.indexOf('*');
+
+	  cSF(check_sum_hex, 2);
+
+	  msg.substring(check_sum_hex, idxStar + 1);
+
+	  long sum = 0;
+
+	  if (!check_sum_hex.hexToLong(sum)) {
+	    return false;
+	  }
+
+	  for (size_t i = 1; i < idxStar; i++) {
+	    sum ^= msg[i];
+	  }
+
+	  return (sum == 0);
+	}
+*/
+func withChecksum(data string) string {
+	var checksum byte
+
+	for i := range len(data) {
+		checksum ^= data[i]
+	}
+
+	return fmt.Sprintf("$%s*%02X", data, checksum)
+}
+
 func (pd *PCData) format() string {
-	return fmt.Sprintf("$MYTMP;%d;%d;%d;%d;%d;%d;%d;%d;%d",
+	currentEpoch := time.Now().Unix()
+
+	f := fmt.Sprintf("MYTMP;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d",
 		pd.Tags.Load(), pd.UniqueTags.Load(), boolToInt(pd.CommStatus.Load()), boolToInt(pd.WifiStatus.Load()),
-		boolToInt(pd.Lte4Status.Load()), boolToInt(pd.RfidStatus.Load()), pd.SysVersion.Load(), pd.Backups.Load(), pd.Envios.Load())
+		boolToInt(pd.Lte4Status.Load()), boolToInt(pd.RfidStatus.Load()), pd.SysVersion.Load(), pd.Backups.Load(), pd.Envios.Load(), currentEpoch)
+
+	return withChecksum(f)
 }
 
 func (pd *PCData) Send(sender *SerialSender) {

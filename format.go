@@ -1,4 +1,4 @@
-package main
+package comunica_serial
 
 import (
 	"fmt"

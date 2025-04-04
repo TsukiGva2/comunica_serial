@@ -1,4 +1,4 @@
-package main
+package comunica_serial
 
 // This package is hosted at: https://github.com/TsukiGva2/comunica_serial
 

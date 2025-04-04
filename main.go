@@ -26,7 +26,7 @@ func main() {
 	pcData.Send(sender)
 	<-time.After(time.Second * 2)
 
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(120 * time.Millisecond)
 	defer ticker.Stop()
 
 	log.Println("Starting to send data...")

@@ -31,18 +31,20 @@ package main
 import (
     "log"
     "time"
+
+    com "github.com/TsukiGva2/comunica_serial"
 )
 
 func main() {
     // Inicializa o SerialSender com uma taxa de baud de 115200
-    sender, err := NewSerialSender(115200)
+    sender, err := com.NewSerialSender(115200)
     if err != nil {
         log.Fatalf("Falha ao inicializar o SerialSender: %v", err)
     }
     defer sender.Close()
 
     // Cria uma instância de PCData e inicializa os valores
-    pcData := &PCData{}
+    pcData := &com.PCData{}
     pcData.Tags.Store(0)
     pcData.UniqueTags.Store(0)
     pcData.CommStatus.Store(false)

@@ -10,43 +10,49 @@ import (
 	"go.bug.st/serial"
 )
 
+// SerialSender represents a serial communication handler that manages sending
+// and receiving data over a serial port.
 type SerialSender struct {
-	port   serial.Port
-	dataCh chan string // Channel to send data
-
-	BaudRate int
+	port     serial.Port // The serial port instance
+	dataCh   chan string // Channel for sending data
+	recvCh   chan string // Channel for receiving data
+	BaudRate int         // Baud rate for the serial communication
 }
 
-// NewSerialSender initializes and returns a SerialSender instance.
+// NewSerialSender initializes a new SerialSender instance and opens the serial port.
 //
 // Parameters:
 //   - baudRate: The baud rate for the serial communication.
 //
 // Returns:
 //   - sender: A pointer to the initialized SerialSender instance.
-//   - err: An error if the initialization fails.
+//   - err: An error if the initialization or port opening fails.
 func NewSerialSender(baudRate int) (sender *SerialSender, err error) {
-
 	sender = &SerialSender{
 		dataCh:   make(chan string),
+		recvCh:   make(chan string),
 		BaudRate: baudRate,
 	}
 
 	err = sender.Open()
-
 	if err != nil {
 		close(sender.dataCh)
+		close(sender.recvCh)
 		return
 	}
 
-	// Start a goroutine to listen to the channel and send data
+	// Start a goroutine to handle data sending and receiving
 	go sender.listenAndSend()
 
 	return
 }
 
+// Open attempts to open the first available serial port with the configured baud rate.
+// It retries multiple times with exponential backoff if the port cannot be opened.
+//
+// Returns:
+//   - err: An error if the port cannot be opened after retries.
 func (s *SerialSender) Open() (err error) {
-
 	var portName string
 	var newPort serial.Port
 
@@ -57,15 +63,13 @@ func (s *SerialSender) Open() (err error) {
 	for retries < maxRetries {
 		<-time.After(backoff) // Wait for the backoff duration
 
-		log.Println("Attempting to reopen the serial port...")
+		log.Println("Attempting to open the serial port...")
 
 		portName, err = GetFirstAvailablePortName()
-
 		if err != nil {
 			log.Printf("Failed to get available port: %v\n", err)
 			retries++
 			backoff *= 2 // Exponential backoff
-
 			continue
 		}
 
@@ -76,69 +80,84 @@ func (s *SerialSender) Open() (err error) {
 		}
 
 		newPort, err = serial.Open(portName, mode)
-
 		if err != nil {
-			log.Printf("Failed to reopen serial port: %v\n", err)
+			log.Printf("Failed to open serial port: %v\n", err)
 			retries++
 			backoff *= 2 // Exponential backoff
 			continue
 		}
 
 		s.port = newPort
-
 		log.Println("Serial port opened successfully.")
-
 		return
 	}
 
-	log.Println("Max retries reached. Giving up on reopening the serial port.")
-
+	log.Println("Max retries reached. Unable to open the serial port.")
 	return
 }
 
-// listenAndSend listens to the data channel and sends data through the serial port.
+// listenAndSend listens for data on the send channel and writes it to the serial port.
+// It also reads incoming data from the serial port and sends it to the receive channel.
 func (s *SerialSender) listenAndSend() {
-
 	for data := range s.dataCh {
 		_, err := s.port.Write(append([]byte(data), '\n'))
-
 		if err != nil {
 			log.Printf("Error writing to serial port: %v\n", err)
-
 			s.port.Close()
 			s.Open()
+			continue
+		}
+
+		buf := make([]byte, 10)
+		c, err := s.port.Read(buf)
+		if err != nil {
+			log.Printf("Error reading from serial port: %v\n", err)
+			continue
+		}
+
+		if c > 0 {
+			s.recvCh <- string(buf[:c]) // Send the received data to the receive channel
 		}
 	}
 }
 
-// SendData sends the provided data through the channel.
+// SendData sends the provided data string through the serial port.
 //
 // Parameters:
 //   - data: The string data to send.
-//
-// Returns:
-//   - err: An error if sending data fails.
 func (s *SerialSender) SendData(data string) {
-
 	s.dataCh <- data // Send data to the channel
 }
 
-// Close closes the serial port and the data channel.
-func (s *SerialSender) Close() {
-
-	close(s.dataCh) // Close the channel
-	s.port.Close()  // Close the serial port
-}
-
-// GetAvailablePorts returns a list of available serial ports.
+// Recv retrieves data from the receive channel if available.
 //
 // Returns:
-//   - port: A string containing the name of the first available serial port.
-//   - err: An error if retrieving the ports fails.
+//   - ok: A boolean indicating whether data was successfully received.
+//   - data: The received string data.
+func (s *SerialSender) Recv() (ok bool, data string) {
+	select {
+	case data, ok = <-s.recvCh:
+	default:
+	}
+	return
+}
+
+// Close closes the serial port and associated channels.
+func (s *SerialSender) Close() {
+	close(s.dataCh) // Close the send channel
+	close(s.recvCh) // Close the receive channel
+	if s.port != nil {
+		s.port.Close() // Close the serial port
+	}
+}
+
+// GetFirstAvailablePortName retrieves the name of the first available serial port.
+//
+// Returns:
+//   - port: The name of the first available serial port.
+//   - err: An error if no ports are found or if the retrieval fails.
 func GetFirstAvailablePortName() (port string, err error) {
-
 	ports, err := serial.GetPortsList()
-
 	if err != nil {
 		return
 	}
@@ -149,6 +168,5 @@ func GetFirstAvailablePortName() (port string, err error) {
 	}
 
 	port = ports[0]
-
 	return
 }

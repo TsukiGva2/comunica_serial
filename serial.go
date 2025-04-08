@@ -30,7 +30,7 @@ type SerialSender struct {
 func NewSerialSender(baudRate int) (sender *SerialSender, err error) {
 	sender = &SerialSender{
 		dataCh:   make(chan string),
-		recvCh:   make(chan string),
+		recvCh:   make(chan string, 10),
 		BaudRate: baudRate,
 	}
 
@@ -43,6 +43,7 @@ func NewSerialSender(baudRate int) (sender *SerialSender, err error) {
 
 	// Start a goroutine to handle data sending and receiving
 	go sender.listenAndSend()
+	go sender.recvAndSend()
 
 	return
 }
@@ -107,7 +108,13 @@ func (s *SerialSender) listenAndSend() {
 			s.Open()
 			continue
 		}
+	}
+}
 
+func (s *SerialSender) recvAndSend() {
+	t := time.NewTicker(300 * time.Millisecond)
+
+	for range t.C {
 		buf := make([]byte, 10)
 		c, err := s.port.Read(buf)
 		if err != nil {

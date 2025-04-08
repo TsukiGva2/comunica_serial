@@ -115,7 +115,7 @@ func (s *SerialSender) recvAndSend() {
 	t := time.NewTicker(300 * time.Millisecond)
 
 	for range t.C {
-		buf := make([]byte, 10)
+		buf := make([]byte, 13)
 		c, err := s.port.Read(buf)
 		if err != nil {
 			log.Printf("Error reading from serial port: %v\n", err)
@@ -141,7 +141,7 @@ func (s *SerialSender) SendData(data string) {
 // Returns:
 //   - ok: A boolean indicating whether data was successfully received.
 //   - data: The received string data.
-func (s *SerialSender) Recv() (ok bool, data string) {
+func (s *SerialSender) Recv() (data string, ok bool) {
 	select {
 	case data, ok = <-s.recvCh:
 	default:

@@ -17,6 +17,7 @@ type SerialSender struct {
 	dataCh   chan string // Channel for sending data
 	recvCh   chan string // Channel for receiving data
 	BaudRate int         // Baud rate for the serial communication
+	portName string
 }
 
 // NewSerialSender initializes a new SerialSender instance and opens the serial port.
@@ -27,11 +28,12 @@ type SerialSender struct {
 // Returns:
 //   - sender: A pointer to the initialized SerialSender instance.
 //   - err: An error if the initialization or port opening fails.
-func NewSerialSender(baudRate int) (sender *SerialSender, err error) {
+func NewSerialSender(baudRate int, portName string) (sender *SerialSender, err error) {
 	sender = &SerialSender{
 		dataCh:   make(chan string),
 		recvCh:   make(chan string, 10),
 		BaudRate: baudRate,
+		portName: portName,
 	}
 
 	err = sender.Open()
@@ -54,7 +56,7 @@ func NewSerialSender(baudRate int) (sender *SerialSender, err error) {
 // Returns:
 //   - err: An error if the port cannot be opened after retries.
 func (s *SerialSender) Open() (err error) {
-	var portName string
+	var portName string = s.portName
 	var newPort serial.Port
 
 	backoff := time.Millisecond * 100 // Initial backoff duration
@@ -66,12 +68,14 @@ func (s *SerialSender) Open() (err error) {
 
 		log.Println("Attempting to open the serial port...")
 
-		portName, err = GetFirstAvailablePortName()
-		if err != nil {
-			log.Printf("Failed to get available port: %v\n", err)
-			retries++
-			backoff *= 2 // Exponential backoff
-			continue
+		if portName == "" {
+			portName, err = GetFirstAvailablePortName()
+			if err != nil {
+				log.Printf("Failed to get available port: %v\n", err)
+				retries++
+				backoff *= 2 // Exponential backoff
+				continue
+			}
 		}
 
 		mode := &serial.Mode{
@@ -173,6 +177,8 @@ func GetFirstAvailablePortName() (port string, err error) {
 		err = fmt.Errorf("no serial ports found")
 		return
 	}
+
+	log.Println("Available serial ports:", ports)
 
 	port = ports[0]
 	return

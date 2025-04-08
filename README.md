@@ -7,16 +7,19 @@
 Para usar este módulo em seu próprio código, você precisa ter o Go instalado em sua máquina. Certifique-se de que sua versão do Go seja compatível com o módulo (veja o arquivo `go.mod` para detalhes).
 
 1. Adicione o módulo `comunica_serial` ao seu projeto usando o comando `go get`:
+
     ```bash
     go get github.com/TsukiGva2/comunica_serial
     ```
 
 2. Importe o módulo em seu código Go:
+
     ```go
     import "github.com/TsukiGva2/comunica_serial"
     ```
 
 3. Certifique-se de executar o comando abaixo para atualizar as dependências do seu projeto:
+
     ```bash
     go mod tidy
     ```

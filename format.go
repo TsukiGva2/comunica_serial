@@ -14,6 +14,7 @@ type PCData struct {
 	WifiStatus atomic.Bool
 	Lte4Status atomic.Bool
 	RfidStatus atomic.Bool
+	UsbStatus  atomic.Bool
 	SysVersion atomic.Int32
 	Backups    atomic.Int32
 	Envios     atomic.Int32
@@ -62,9 +63,9 @@ func withChecksum(data string) string {
 func (pd *PCData) format() string {
 	currentEpoch := time.Now().Unix()
 
-	f := fmt.Sprintf("MYTMP;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d",
+	f := fmt.Sprintf("MYTMP;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d",
 		pd.Tags.Load(), pd.UniqueTags.Load(), boolToInt(pd.CommStatus.Load()), boolToInt(pd.WifiStatus.Load()),
-		boolToInt(pd.Lte4Status.Load()), boolToInt(pd.RfidStatus.Load()), pd.SysVersion.Load(), pd.Backups.Load(), pd.Envios.Load(), currentEpoch)
+		boolToInt(pd.Lte4Status.Load()), boolToInt(pd.RfidStatus.Load()), boolToInt(pd.UsbStatus.Load()), pd.SysVersion.Load(), pd.Backups.Load(), pd.Envios.Load(), currentEpoch)
 
 	return withChecksum(f)
 }

@@ -1,4 +1,4 @@
-module github.com/TsukiGva2/comunica_serial
+module github.com/TsukiGva2/comunica_serial/v2
 
 go 1.24.2
 

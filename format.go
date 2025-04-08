@@ -3,8 +3,6 @@ package comunica_serial
 import (
 	"fmt"
 	"log"
-	"strconv"
-	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -70,27 +68,6 @@ func (pd *PCData) format() string {
 		boolToInt(pd.Lte4Status.Load()), boolToInt(pd.RfidStatus.Load()), boolToInt(pd.UsbStatus.Load()), pd.SysVersion.Load(), pd.Backups.Load(), pd.Envios.Load(), currentEpoch)
 
 	return withChecksum(f)
-}
-
-func RecvScreen(sender *SerialSender) (screen int, ok bool) {
-	data, ok := sender.Recv()
-
-	if !ok {
-		return
-	}
-
-	if !strings.HasPrefix(data, "$MYTMP;") {
-		ok = false
-		return
-	}
-
-	screen, err := strconv.Atoi(data[8:])
-
-	if err != nil {
-		ok = false
-	}
-
-	return
 }
 
 func (pd *PCData) Send(sender *SerialSender) {

@@ -66,9 +66,8 @@ func withChecksum(data string) string {
 func (pd *PCData) format() string {
 	currentEpoch := time.Now().Unix()
 
-	f := fmt.Sprintf("MYTMP;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d",
-		pd.Tags.Load(), pd.UniqueTags.Load(), boolToInt(pd.CommStatus.Load()), boolToInt(pd.WifiStatus.Load()),
-		boolToInt(pd.Lte4Status.Load()), boolToInt(pd.RfidStatus.Load()), boolToInt(pd.UsbStatus.Load()),
+	f := fmt.Sprintf("MYTMP;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d",
+		pd.Tags.Load(), pd.UniqueTags.Load(), boolToInt(pd.CommStatus.Load()), boolToInt(pd.RfidStatus.Load()), boolToInt(pd.UsbStatus.Load()),
 		pd.SysVersion, pd.SysCodeName, pd.Backups, pd.PermanentUniqueTags.Load(), currentEpoch)
 
 	return withChecksum(f)
